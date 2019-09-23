@@ -1,19 +1,30 @@
-import React from 'react'
-import logo from './logo.svg'
+import React, { useEffect, useRef } from 'react'
 import './App.css'
+import * as THREE from 'three'
 
 const App: React.FC = () => {
+  const canvasRootRef = useRef<HTMLDivElement>(null)
+
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const cameraRef = useRef<THREE.Camera | null>(null)
+
+  const initScene = () => {
+    const canvasRoot = canvasRootRef.current as HTMLDivElement
+
+    const height = canvasRoot.clientHeight
+    const width = canvasRoot.clientWidth
+
+    sceneRef.current = new THREE.Scene()
+    cameraRef.current = new THREE.Camera()
+  }
+
+  useEffect(() => {
+    initScene()
+  }, [])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
-          Learn React
-        </a>
-      </header>
+      <div className="canvasRoot" ref={canvasRootRef}></div>
     </div>
   )
 }
