@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import './App.css'
 import * as THREE from 'three'
+import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
@@ -30,6 +31,9 @@ const App: React.FC = () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setClearColor('#202020')
     renderer.setSize(width, height)
+
+    // Controls
+    const mapControl = new MapControls(camera, renderer.domElement)
 
     // Functions
     const renderScene = () => {
