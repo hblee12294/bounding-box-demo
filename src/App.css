@@ -1,6 +1,39 @@
-.canvasRoot {
+.canvas-root {
   width: 100vw;
   height: 100vh;
-  /* background-color: #202020; */
+  background-color: #202020;
   background-color: #333;
+}
+
+.control {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.control-row {
+  margin-bottom: 0.5rem;
+}
+
+.control-label {
+  display: inline-block;
+  min-width: 4rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.control-btn {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background-color: #404040;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  outline: none;
+  cursor: pointer;
+}
+
+.control-btn:active {
+  background-color: #4a4a4a;
 }

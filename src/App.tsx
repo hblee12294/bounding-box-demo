@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import * as THREE from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
-
   const frameIDRef = useRef<number | null>(null)
+  const cubeRef = useRef<THREE.Mesh | null>(null)
 
   useEffect(() => {
     const canvasRoot = canvasRootRef.current as HTMLDivElement
@@ -20,9 +20,16 @@ const App: React.FC = () => {
 
     // Object
     const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-    const material = new THREE.MeshBasicMaterial({ color: 0xff00ff })
+    const material = new THREE.MeshBasicMaterial({ color: 0x3498db, opacity: 0.4, transparent: true })
     const cube = new THREE.Mesh(geometry, material)
+    cubeRef.current = cube
     cube.position.set(0, 0.5, 0)
+
+    // Object lines
+    const edgeGeometry = new THREE.EdgesGeometry(geometry)
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff })
+    const lineSegments = new THREE.LineSegments(edgeGeometry, lineMaterial)
+    cube.add(lineSegments)
 
     // Scene
     const scene = new THREE.Scene()
@@ -73,9 +80,36 @@ const App: React.FC = () => {
     }
   }, [])
 
+  const handleResizeCube = useCallback((prop: 'width' | 'height' | 'depth', dir: boolean) => {
+    const cube = cubeRef.current
+    if (cube) {
+      console.log(cube)
+    }
+  }, [])
+
   return (
     <div className="App">
-      <div className="canvasRoot" ref={canvasRootRef}></div>
+      <div className="canvas-root" ref={canvasRootRef}></div>
+      <ul className="control">
+        <li className="control-row">
+          <label className="control-label">Width</label>
+          <button className="control-btn" onClick={() => handleResizeCube('width', true)}>
+            +
+          </button>
+          <button className="control-btn" onClick={() => handleResizeCube('width', false)}>
+            -
+          </button>
+        </li>
+        <li className="control-row">
+          <label className="control-label">Height</label>
+          <button className="control-btn" onClick={() => handleResizeCube('height', true)}>
+            +
+          </button>
+          <button className="control-btn" onClick={() => handleResizeCube('height', false)}>
+            -
+          </button>
+        </li>
+      </ul>
     </div>
   )
 }
