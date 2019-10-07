@@ -16,12 +16,13 @@ const App: React.FC = () => {
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
-    camera.position.z = 4
+    camera.position.set(0, 8, 8)
 
     // Object
     const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
     const material = new THREE.MeshBasicMaterial({ color: 0xff00ff })
     const cube = new THREE.Mesh(geometry, material)
+    cube.position.set(0, 0.5, 0)
 
     // Scene
     const scene = new THREE.Scene()
@@ -34,6 +35,12 @@ const App: React.FC = () => {
 
     // Controls
     const mapControl = new MapControls(camera, renderer.domElement)
+
+    // Helpers
+    const gridHelper = new THREE.GridHelper(10, 10)
+    scene.add(gridHelper)
+    const axesHelper = new THREE.AxesHelper(5)
+    scene.add(axesHelper)
 
     // Functions
     const renderScene = () => {
