@@ -3,10 +3,23 @@ import './App.css'
 import * as THREE from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 
+interface Group extends THREE.Group {
+  children: [THREE.LineSegments, THREE.Mesh]
+}
+
+function updateGroupGeometry(mesh: Group, geometry: THREE.BufferGeometry) {
+  // Dispose outline & mesh geometries
+  mesh.children[0].geometry.dispose()
+  mesh.children[1].geometry.dispose()
+
+  mesh.children[0].geometry = new THREE.WireframeGeometry(geometry)
+  mesh.children[1].geometry = geometry
+}
+
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
-  const cubeRef = useRef<THREE.Mesh | null>(null)
+  const cubeRef = useRef<Group | null>(null)
 
   useEffect(() => {
     const canvasRoot = canvasRootRef.current as HTMLDivElement
@@ -19,25 +32,39 @@ const App: React.FC = () => {
     camera.position.set(0, 8, 8)
 
     // Object
-    const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-    const material = new THREE.MeshBasicMaterial({ color: 0x3498db, opacity: 0.4, transparent: true })
-    const cube = new THREE.Mesh(geometry, material)
-    cubeRef.current = cube
-    cube.position.set(0, 0.5, 0)
+    // - Group
+    const group = new THREE.Group() as Group
 
-    // Object lines
-    const edgeGeometry = new THREE.EdgesGeometry(geometry)
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff })
-    const lineSegments = new THREE.LineSegments(edgeGeometry, lineMaterial)
-    cube.add(lineSegments)
+    // - Geometry
+    const geometry = new THREE.BufferGeometry()
+    geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x3498db,
+      opacity: 0.4,
+      transparent: true,
+    })
+
+    // - Outline
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+    })
+
+    group.add(new THREE.LineSegments(geometry, lineMaterial))
+    group.add(new THREE.Mesh(geometry, material))
+
+    updateGroupGeometry(group, new THREE.BoxBufferGeometry(1, 1, 1))
+
+    group.position.set(0, 0.5, 0)
+    cubeRef.current = group
 
     // Scene
     const scene = new THREE.Scene()
-    scene.add(cube)
+    scene.add(group)
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setClearColor('#202020')
+    renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(width, height)
 
     // Controls
