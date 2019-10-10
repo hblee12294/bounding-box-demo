@@ -7,12 +7,14 @@ interface Group extends THREE.Group {
   children: [THREE.LineSegments, THREE.Mesh]
 }
 
-function updateGroupGeometry(mesh: Group, geometry: THREE.BufferGeometry) {
+type Dimension = [number, number, number]
+
+function updateCubeGeometry(mesh: Group, geometry: THREE.BufferGeometry) {
   // Dispose outline & mesh geometries
   mesh.children[0].geometry.dispose()
   mesh.children[1].geometry.dispose()
 
-  mesh.children[0].geometry = new THREE.WireframeGeometry(geometry)
+  mesh.children[0].geometry = new THREE.EdgesGeometry(geometry)
   mesh.children[1].geometry = geometry
 }
 
@@ -20,6 +22,7 @@ const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
   const cubeRef = useRef<Group | null>(null)
+  const dimensionRef = useRef<Dimension>([1, 1, 1])
 
   useEffect(() => {
     const canvasRoot = canvasRootRef.current as HTMLDivElement
@@ -52,7 +55,7 @@ const App: React.FC = () => {
     group.add(new THREE.LineSegments(geometry, lineMaterial))
     group.add(new THREE.Mesh(geometry, material))
 
-    updateGroupGeometry(group, new THREE.BoxBufferGeometry(1, 1, 1))
+    updateCubeGeometry(group, new THREE.BoxBufferGeometry(...dimensionRef.current))
 
     group.position.set(0, 0.5, 0)
     cubeRef.current = group
@@ -68,7 +71,7 @@ const App: React.FC = () => {
     renderer.setSize(width, height)
 
     // Controls
-    const mapControl = new MapControls(camera, renderer.domElement)
+    new MapControls(camera, renderer.domElement)
 
     // Helpers
     const gridHelper = new THREE.GridHelper(10, 10)
@@ -109,8 +112,24 @@ const App: React.FC = () => {
 
   const handleResizeCube = useCallback((prop: 'width' | 'height' | 'depth', dir: boolean) => {
     const cube = cubeRef.current
+    const dimension = dimensionRef.current
+
     if (cube) {
-      console.log(cube)
+      switch (prop) {
+        case 'width':
+          dimension[0] += dir ? 1 : -1
+          break
+        case 'height':
+          dimension[1] += dir ? 1 : -1
+          break
+        case 'depth':
+          dimension[2] += dir ? 1 : -1
+          break
+        default:
+          break
+      }
+
+      updateCubeGeometry(cube, new THREE.BoxBufferGeometry(...dimension))
     }
   }, [])
 
@@ -133,6 +152,15 @@ const App: React.FC = () => {
             +
           </button>
           <button className="control-btn" onClick={() => handleResizeCube('height', false)}>
+            -
+          </button>
+        </li>
+        <li className="control-row">
+          <label className="control-label">Depth</label>
+          <button className="control-btn" onClick={() => handleResizeCube('depth', true)}>
+            +
+          </button>
+          <button className="control-btn" onClick={() => handleResizeCube('depth', false)}>
             -
           </button>
         </li>
