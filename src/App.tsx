@@ -1,13 +1,27 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import './App.css'
+
+// Three
 import * as THREE from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
+
+// Components
+import Slider from 'rc-slider'
+import 'rc-slider/assets/index.css'
+
+const DEFAULT_SLIDER_ATTRS = {
+  min: 1,
+  max: 10,
+  step: 0.01,
+  handleStyle: {
+    border: 'none',
+    borderRadius: '0',
+  } as React.CSSProperties,
+}
 
 interface Group extends THREE.Group {
   children: [THREE.LineSegments, THREE.Mesh]
 }
-
-type Dimension = [number, number, number]
 
 function updateCubeGeometry(mesh: Group, geometry: THREE.BufferGeometry) {
   // Dispose outline & mesh geometries
@@ -22,7 +36,10 @@ const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
   const cubeRef = useRef<Group | null>(null)
-  const dimensionRef = useRef<Dimension>([1, 1, 1])
+
+  const [cubeWidth, setCubeWidth] = useState<number>(1)
+  const [cubeHeight, setCubeHeight] = useState<number>(1)
+  const [cubeDepth, setCubeDepth] = useState<number>(1)
 
   useEffect(() => {
     const canvasRoot = canvasRootRef.current as HTMLDivElement
@@ -54,8 +71,6 @@ const App: React.FC = () => {
 
     group.add(new THREE.LineSegments(geometry, lineMaterial))
     group.add(new THREE.Mesh(geometry, material))
-
-    updateCubeGeometry(group, new THREE.BoxBufferGeometry(...dimensionRef.current))
 
     group.position.set(0, 0.5, 0)
     cubeRef.current = group
@@ -110,28 +125,13 @@ const App: React.FC = () => {
     }
   }, [])
 
-  const handleResizeCube = useCallback((prop: 'width' | 'height' | 'depth', dir: boolean) => {
+  useEffect(() => {
     const cube = cubeRef.current
-    const dimension = dimensionRef.current
 
     if (cube) {
-      switch (prop) {
-        case 'width':
-          dimension[0] += dir ? 1 : -1
-          break
-        case 'height':
-          dimension[1] += dir ? 1 : -1
-          break
-        case 'depth':
-          dimension[2] += dir ? 1 : -1
-          break
-        default:
-          break
-      }
-
-      updateCubeGeometry(cube, new THREE.BoxBufferGeometry(...dimension))
+      updateCubeGeometry(cube, new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
     }
-  }, [])
+  }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (
     <div className="App">
@@ -139,30 +139,15 @@ const App: React.FC = () => {
       <ul className="control">
         <li className="control-row">
           <label className="control-label">Width</label>
-          <button className="control-btn" onClick={() => handleResizeCube('width', true)}>
-            +
-          </button>
-          <button className="control-btn" onClick={() => handleResizeCube('width', false)}>
-            -
-          </button>
+          <Slider value={cubeWidth} onChange={setCubeWidth} {...DEFAULT_SLIDER_ATTRS} />
         </li>
         <li className="control-row">
           <label className="control-label">Height</label>
-          <button className="control-btn" onClick={() => handleResizeCube('height', true)}>
-            +
-          </button>
-          <button className="control-btn" onClick={() => handleResizeCube('height', false)}>
-            -
-          </button>
+          <Slider value={cubeHeight} onChange={setCubeHeight} {...DEFAULT_SLIDER_ATTRS} />
         </li>
         <li className="control-row">
           <label className="control-label">Depth</label>
-          <button className="control-btn" onClick={() => handleResizeCube('depth', true)}>
-            +
-          </button>
-          <button className="control-btn" onClick={() => handleResizeCube('depth', false)}>
-            -
-          </button>
+          <Slider value={cubeDepth} onChange={setCubeDepth} {...DEFAULT_SLIDER_ATTRS} />
         </li>
       </ul>
     </div>
