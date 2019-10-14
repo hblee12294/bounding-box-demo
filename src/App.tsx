@@ -4,6 +4,10 @@ import './App.css'
 // Three
 import * as THREE from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
+import { DragControls } from 'three/examples/jsm/controls/DragControls'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { Wireframe } from 'three/examples/jsm/lines/Wireframe'
+import { WireframeGeometry2 } from 'three/examples/jsm/lines/WireframeGeometry2'
 
 // Components
 import Slider from 'rc-slider'
@@ -19,23 +23,24 @@ const DEFAULT_SLIDER_ATTRS = {
   } as React.CSSProperties,
 }
 
-interface Group extends THREE.Group {
-  children: [THREE.LineSegments, THREE.Mesh]
+interface Cube extends THREE.Mesh {
+  children: [Wireframe]
 }
 
-function updateCubeGeometry(mesh: Group, geometry: THREE.BufferGeometry) {
+function updateCubeGeometry(mesh: Cube, geometry: THREE.BufferGeometry) {
   // Dispose outline & mesh geometries
+  mesh.geometry.dispose()
   mesh.children[0].geometry.dispose()
-  mesh.children[1].geometry.dispose()
 
-  mesh.children[0].geometry = new THREE.EdgesGeometry(geometry)
-  mesh.children[1].geometry = geometry
+  mesh.geometry = geometry
+  mesh.children[0].geometry = new WireframeGeometry2(geometry)
 }
 
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
-  const cubeRef = useRef<Group | null>(null)
+  const cubesRef = useRef<Cube[]>([])
+  const currentCubeIndexRef = useRef<number>(0)
 
   const [cubeWidth, setCubeWidth] = useState<number>(1)
   const [cubeHeight, setCubeHeight] = useState<number>(1)
@@ -51,10 +56,40 @@ const App: React.FC = () => {
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     camera.position.set(0, 8, 8)
 
-    // Object
-    // - Group
-    const group = new THREE.Group() as Group
+    // Scene
+    const scene = new THREE.Scene()
 
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setClearColor('#202020')
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(width, height)
+
+    // Controls
+    const mapControl = new MapControls(camera, renderer.domElement)
+    const dragControl = new DragControls(cubesRef.current, camera, renderer.domElement)
+
+    dragControl.addEventListener('dragstart', function(event) {
+      const e = event as DragEvent
+
+      // Disbale mapControl
+      mapControl.enabled = false
+    })
+
+    dragControl.addEventListener('dragend', function(event) {
+      const e = event as DragEvent
+
+      // Enable mapControl
+      mapControl.enabled = true
+    })
+
+    // Helpers
+    const gridHelper = new THREE.GridHelper(10, 10)
+    scene.add(gridHelper)
+    const axesHelper = new THREE.AxesHelper(5)
+    scene.add(axesHelper)
+
+    // Object
     // - Geometry
     const geometry = new THREE.BufferGeometry()
     geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
@@ -65,34 +100,23 @@ const App: React.FC = () => {
     })
 
     // - Outline
-    const lineMaterial = new THREE.LineBasicMaterial({
+    const lineMaterial = new LineMaterial({
       color: 0xffffff,
+      linewidth: 0.8,
+      dashed: false,
+      resolution: new THREE.Vector2(width, height),
     })
 
-    group.add(new THREE.LineSegments(geometry, lineMaterial))
-    group.add(new THREE.Mesh(geometry, material))
+    const cube = new THREE.Mesh(geometry, material) as Cube
+    const wireframe = new Wireframe(new WireframeGeometry2(geometry), lineMaterial)
+    wireframe.computeLineDistances()
+    wireframe.scale.set(1, 1, 1)
+    cube.add(wireframe)
 
-    group.position.set(0, 0.5, 0)
-    cubeRef.current = group
+    cube.position.set(0, 0.5, 0)
+    cubesRef.current.push(cube)
 
-    // Scene
-    const scene = new THREE.Scene()
-    scene.add(group)
-
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setClearColor('#202020')
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(width, height)
-
-    // Controls
-    new MapControls(camera, renderer.domElement)
-
-    // Helpers
-    const gridHelper = new THREE.GridHelper(10, 10)
-    scene.add(gridHelper)
-    const axesHelper = new THREE.AxesHelper(5)
-    scene.add(axesHelper)
+    scene.add(cube)
 
     // Functions
     const renderScene = () => {
@@ -126,11 +150,10 @@ const App: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    const cube = cubeRef.current
+    const cubes = cubesRef.current
+    const currentCubeIndex = currentCubeIndexRef.current
 
-    if (cube) {
-      updateCubeGeometry(cube, new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
-    }
+    updateCubeGeometry(cubes[currentCubeIndex], new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
   }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (
