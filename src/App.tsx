@@ -8,6 +8,8 @@ import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Wireframe } from 'three/examples/jsm/lines/Wireframe'
 import { WireframeGeometry2 } from 'three/examples/jsm/lines/WireframeGeometry2'
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 
 // Components
 import Slider from 'rc-slider'
@@ -27,19 +29,32 @@ interface Cube extends THREE.Mesh {
   children: [Wireframe]
 }
 
+interface Cube2 extends THREE.Mesh {
+  children: [LineSegments2]
+}
+
 function updateCubeGeometry(mesh: Cube, geometry: THREE.BufferGeometry) {
+  // Dispose outline & mesh geometries
+  mesh.geometry.dispose()
+  mesh.children[0].geometry.dispose()
+  mesh.geometry = geometry
+  mesh.children[0].geometry = new WireframeGeometry2(geometry)
+}
+
+function updateCubeGeometry2(mesh: Cube2, geometry: THREE.BufferGeometry) {
   // Dispose outline & mesh geometries
   mesh.geometry.dispose()
   mesh.children[0].geometry.dispose()
 
   mesh.geometry = geometry
-  mesh.children[0].geometry = new WireframeGeometry2(geometry)
+  mesh.children[0].geometry = new LineSegmentsGeometry().setPositions(new THREE.EdgesGeometry(geometry).attributes
+    .position.array as Float32Array)
 }
 
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
-  const cubesRef = useRef<Cube[]>([])
+  const cubesRef = useRef<(Cube | Cube2)[]>([])
   const currentCubeIndexRef = useRef<number>(0)
 
   const [cubeWidth, setCubeWidth] = useState<number>(1)
@@ -91,8 +106,8 @@ const App: React.FC = () => {
 
     // Object
     // - Geometry
-    const geometry = new THREE.BufferGeometry()
-    geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
+    // const geometry = new THREE.BufferGeometry()
+    // geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
     const material = new THREE.MeshBasicMaterial({
       color: 0x3498db,
       opacity: 0.4,
@@ -100,23 +115,41 @@ const App: React.FC = () => {
     })
 
     // - Outline
-    const lineMaterial = new LineMaterial({
-      color: 0xffffff,
-      linewidth: 0.8,
-      dashed: false,
-      resolution: new THREE.Vector2(width, height),
-    })
+    // const lineMaterial = new LineMaterial({
+    //   color: 0xffffff,
+    //   linewidth: 0.8,
+    //   dashed: false,
+    //   resolution: new THREE.Vector2(width, height),
+    // })
 
-    const cube = new THREE.Mesh(geometry, material) as Cube
-    const wireframe = new Wireframe(new WireframeGeometry2(geometry), lineMaterial)
-    wireframe.computeLineDistances()
-    wireframe.scale.set(1, 1, 1)
-    cube.add(wireframe)
+    // const cube = new THREE.Mesh(geometry, material) as Cube
+    // const wireframe = new Wireframe(new WireframeGeometry2(geometry), lineMaterial)
+    // wireframe.computeLineDistances()
+    // wireframe.scale.set(1, 1, 1)
+    // cube.add(wireframe)
 
-    cube.position.set(0, 0.5, 0)
-    cubesRef.current.push(cube)
+    // cube.position.set(0, 0.5, 0)
+    // cubesRef.current.push(cube)
 
-    scene.add(cube)
+    // scene.add(cube)
+
+    const geomPavement = new THREE.BoxBufferGeometry()
+
+    const edgesPavement = new THREE.EdgesGeometry(geomPavement)
+
+    const lineGeometry = new LineSegmentsGeometry().setPositions(edgesPavement.attributes.position
+      .array as Float32Array)
+
+    const lineMaterial = new LineMaterial({ color: 0xffffff, linewidth: 1 })
+
+    lineMaterial.resolution.set(window.innerWidth, window.innerHeight)
+
+    const linePavement = new LineSegments2(lineGeometry, lineMaterial)
+
+    const cube2 = new THREE.Mesh(geomPavement, material) as Cube2
+    cube2.add(linePavement)
+    scene.add(cube2)
+    cubesRef.current.push(cube2)
 
     // Functions
     const renderScene = () => {
@@ -153,7 +186,8 @@ const App: React.FC = () => {
     const cubes = cubesRef.current
     const currentCubeIndex = currentCubeIndexRef.current
 
-    updateCubeGeometry(cubes[currentCubeIndex], new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
+    // updateCubeGeometry(cubes[currentCubeIndex], new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
+    updateCubeGeometry2(cubes[currentCubeIndex] as Cube2, new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
   }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (
