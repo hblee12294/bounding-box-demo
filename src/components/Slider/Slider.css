@@ -1,0 +1,8 @@
+.slider-track {
+  height: 6px;
+}
+
+.slider-track-inner {
+  height: 100%;
+  cursor: pointer;
+}

@@ -14,6 +14,7 @@
 .control-row {
   display: grid;
   grid-template-columns: auto 5rem;
+  align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }

@@ -2,7 +2,17 @@ import React, { useEffect, useRef, useCallback, useState } from 'react'
 import './App.css'
 
 // Three
-import * as THREE from 'three'
+import {
+  EdgesGeometry,
+  PerspectiveCamera,
+  Scene,
+  WebGLRenderer,
+  GridHelper,
+  AxesHelper,
+  MeshBasicMaterial,
+  BoxBufferGeometry,
+  Mesh,
+} from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
@@ -12,17 +22,12 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 
 // Components
-import Slider from 'rc-slider'
-import 'rc-slider/assets/index.css'
+import { Slider } from './components'
 
-const DEFAULT_SLIDER_ATTRS = {
+const commonSliderProps = {
   min: 1,
   max: 10,
-  step: 0.01,
-  handleStyle: {
-    border: 'none',
-    borderRadius: '0',
-  } as React.CSSProperties,
+  step: 0.1,
 }
 
 interface Cube extends THREE.Mesh {
@@ -47,8 +52,8 @@ function updateCubeGeometry2(mesh: Cube2, geometry: THREE.BufferGeometry) {
   mesh.children[0].geometry.dispose()
 
   mesh.geometry = geometry
-  mesh.children[0].geometry = new LineSegmentsGeometry().setPositions(new THREE.EdgesGeometry(geometry).attributes
-    .position.array as Float32Array)
+  mesh.children[0].geometry = new LineSegmentsGeometry().setPositions(new EdgesGeometry(geometry).attributes.position
+    .array as Float32Array)
 }
 
 const App: React.FC = () => {
@@ -68,14 +73,14 @@ const App: React.FC = () => {
     let height = canvasRoot.clientHeight
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    const camera = new PerspectiveCamera(75, width / height, 0.1, 1000)
     camera.position.set(0, 8, 8)
 
     // Scene
-    const scene = new THREE.Scene()
+    const scene = new Scene()
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    const renderer = new WebGLRenderer({ antialias: true })
     renderer.setClearColor('#202020')
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(width, height)
@@ -99,16 +104,16 @@ const App: React.FC = () => {
     })
 
     // Helpers
-    const gridHelper = new THREE.GridHelper(10, 10)
+    const gridHelper = new GridHelper(10, 10)
     scene.add(gridHelper)
-    const axesHelper = new THREE.AxesHelper(5)
+    const axesHelper = new AxesHelper(5)
     scene.add(axesHelper)
 
     // Object
     // - Geometry
     // const geometry = new THREE.BufferGeometry()
     // geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
-    const material = new THREE.MeshBasicMaterial({
+    const material = new MeshBasicMaterial({
       color: 0x3498db,
       opacity: 0.4,
       transparent: true,
@@ -133,9 +138,9 @@ const App: React.FC = () => {
 
     // scene.add(cube)
 
-    const geomPavement = new THREE.BoxBufferGeometry()
+    const geomPavement = new BoxBufferGeometry()
 
-    const edgesPavement = new THREE.EdgesGeometry(geomPavement)
+    const edgesPavement = new EdgesGeometry(geomPavement)
 
     const lineGeometry = new LineSegmentsGeometry().setPositions(edgesPavement.attributes.position
       .array as Float32Array)
@@ -146,7 +151,7 @@ const App: React.FC = () => {
 
     const linePavement = new LineSegments2(lineGeometry, lineMaterial)
 
-    const cube2 = new THREE.Mesh(geomPavement, material) as Cube2
+    const cube2 = new Mesh(geomPavement, material) as Cube2
     cube2.add(linePavement)
     scene.add(cube2)
     cubesRef.current.push(cube2)
@@ -187,7 +192,7 @@ const App: React.FC = () => {
     const currentCubeIndex = currentCubeIndexRef.current
 
     // updateCubeGeometry(cubes[currentCubeIndex], new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
-    updateCubeGeometry2(cubes[currentCubeIndex] as Cube2, new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
+    updateCubeGeometry2(cubes[currentCubeIndex] as Cube2, new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
   }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (
@@ -196,15 +201,15 @@ const App: React.FC = () => {
       <ul className="control">
         <li className="control-row">
           <label className="control-label">Width</label>
-          <Slider value={cubeWidth} onChange={setCubeWidth} {...DEFAULT_SLIDER_ATTRS} />
+          <Slider value={cubeWidth} onChange={setCubeWidth} {...commonSliderProps} />
         </li>
         <li className="control-row">
           <label className="control-label">Height</label>
-          <Slider value={cubeHeight} onChange={setCubeHeight} {...DEFAULT_SLIDER_ATTRS} />
+          <Slider value={cubeHeight} onChange={setCubeHeight} {...commonSliderProps} />
         </li>
         <li className="control-row">
           <label className="control-label">Depth</label>
-          <Slider value={cubeDepth} onChange={setCubeDepth} {...DEFAULT_SLIDER_ATTRS} />
+          <Slider value={cubeDepth} onChange={setCubeDepth} {...commonSliderProps} />
         </li>
       </ul>
     </div>
