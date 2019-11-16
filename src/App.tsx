@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 // Three
 import {
-  EdgesGeometry,
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
@@ -11,15 +10,16 @@ import {
   AxesHelper,
   MeshBasicMaterial,
   BoxBufferGeometry,
-  Mesh,
+  Float32BufferAttribute,
+  Vector2,
+  BufferGeometry,
 } from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
-import { Wireframe } from 'three/examples/jsm/lines/Wireframe'
-import { WireframeGeometry2 } from 'three/examples/jsm/lines/WireframeGeometry2'
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
+
+import { FatWireframeCube, FatEdgesCube, Cube } from './types'
+import { updateFatWireframeCube, updateFatEdgesCube, createCube } from './functions'
 
 // Components
 import { Slider } from './components'
@@ -30,36 +30,10 @@ const commonSliderProps = {
   step: 0.1,
 }
 
-interface Cube extends THREE.Mesh {
-  children: [Wireframe]
-}
-
-interface Cube2 extends THREE.Mesh {
-  children: [LineSegments2]
-}
-
-function updateCubeGeometry(mesh: Cube, geometry: THREE.BufferGeometry) {
-  // Dispose outline & mesh geometries
-  mesh.geometry.dispose()
-  mesh.children[0].geometry.dispose()
-  mesh.geometry = geometry
-  mesh.children[0].geometry = new WireframeGeometry2(geometry)
-}
-
-function updateCubeGeometry2(mesh: Cube2, geometry: THREE.BufferGeometry) {
-  // Dispose outline & mesh geometries
-  mesh.geometry.dispose()
-  mesh.children[0].geometry.dispose()
-
-  mesh.geometry = geometry
-  mesh.children[0].geometry = new LineSegmentsGeometry().setPositions(new EdgesGeometry(geometry).attributes.position
-    .array as Float32Array)
-}
-
 const App: React.FC = () => {
   const canvasRootRef = useRef<HTMLDivElement>(null)
   const frameIDRef = useRef<number | null>(null)
-  const cubesRef = useRef<(Cube | Cube2)[]>([])
+  const cubesRef = useRef<(Cube)[]>([])
   const currentCubeIndexRef = useRef<number>(0)
 
   const [cubeWidth, setCubeWidth] = useState<number>(1)
@@ -76,7 +50,7 @@ const App: React.FC = () => {
     const camera = new PerspectiveCamera(75, width / height, 0.1, 1000)
     camera.position.set(0, 8, 8)
 
-    // Scene
+    // Scenefds
     const scene = new Scene()
 
     // Renderer
@@ -109,52 +83,28 @@ const App: React.FC = () => {
     const axesHelper = new AxesHelper(5)
     scene.add(axesHelper)
 
-    // Object
-    // - Geometry
-    // const geometry = new THREE.BufferGeometry()
-    // geometry.addAttribute('position', new THREE.Float32BufferAttribute([], 3))
+    // Cube
+    const geometry = new BufferGeometry()
+    geometry.addAttribute('position', new Float32BufferAttribute([], 3))
+
     const material = new MeshBasicMaterial({
-      color: 0x3498db,
+      color: 0x1abc9c,
       opacity: 0.4,
       transparent: true,
     })
 
-    // - Outline
-    // const lineMaterial = new LineMaterial({
-    //   color: 0xffffff,
-    //   linewidth: 0.8,
-    //   dashed: false,
-    //   resolution: new THREE.Vector2(width, height),
-    // })
+    // Wireframe / edges material
+    const lineMaterial = new LineMaterial({
+      color: 0xffffff,
+      linewidth: 1,
+      dashed: false,
+      resolution: new Vector2(width, height),
+    })
 
-    // const cube = new THREE.Mesh(geometry, material) as Cube
-    // const wireframe = new Wireframe(new WireframeGeometry2(geometry), lineMaterial)
-    // wireframe.computeLineDistances()
-    // wireframe.scale.set(1, 1, 1)
-    // cube.add(wireframe)
-
-    // cube.position.set(0, 0.5, 0)
-    // cubesRef.current.push(cube)
-
-    // scene.add(cube)
-
-    const geomPavement = new BoxBufferGeometry()
-
-    const edgesPavement = new EdgesGeometry(geomPavement)
-
-    const lineGeometry = new LineSegmentsGeometry().setPositions(edgesPavement.attributes.position
-      .array as Float32Array)
-
-    const lineMaterial = new LineMaterial({ color: 0xffffff, linewidth: 1 })
-
-    lineMaterial.resolution.set(window.innerWidth, window.innerHeight)
-
-    const linePavement = new LineSegments2(lineGeometry, lineMaterial)
-
-    const cube2 = new Mesh(geomPavement, material) as Cube2
-    cube2.add(linePavement)
-    scene.add(cube2)
-    cubesRef.current.push(cube2)
+    const cube = createCube('FatEdgesCube', geometry, material, lineMaterial)
+    // const cube = createCube('FatWireframeCube', geometry, material, lineMaterial)
+    cubesRef.current.push(cube)
+    scene.add(cube)
 
     // Functions
     const renderScene = () => {
@@ -190,9 +140,22 @@ const App: React.FC = () => {
   useEffect(() => {
     const cubes = cubesRef.current
     const currentCubeIndex = currentCubeIndexRef.current
+    const name = cubes[currentCubeIndex].name
 
-    // updateCubeGeometry(cubes[currentCubeIndex], new THREE.BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
-    updateCubeGeometry2(cubes[currentCubeIndex] as Cube2, new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
+    switch (name) {
+      case 'FatWireframeCube':
+        updateFatWireframeCube(
+          cubes[currentCubeIndex] as FatWireframeCube,
+          new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
+        )
+        break
+      case 'FatEdgesCube':
+        updateFatEdgesCube(
+          cubes[currentCubeIndex] as FatEdgesCube,
+          new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
+        )
+        break
+    }
   }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (

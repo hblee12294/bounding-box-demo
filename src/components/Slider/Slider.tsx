@@ -27,7 +27,7 @@ const Slider: React.FC<SliderProps> = ({ value, onChange, step, min, max, marks 
               style={{
                 background: getTrackBackground({
                   values: [value],
-                  colors: ['#009fff', '#dddddd'],
+                  colors: ['#138D75', '#dddddd'],
                   min,
                   max,
                 }),
