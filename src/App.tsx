@@ -17,9 +17,10 @@ import {
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 
-import { FatWireframeCube, FatEdgesCube, Cube, CubeType } from './types'
-import { updateFatWireframeCube, updateFatEdgesCube, createCube } from './functions'
+import { Cube, CubeType } from './types'
+import { createCube, updateCube } from './functions'
 
 // Components
 import { Slider } from './components'
@@ -102,7 +103,7 @@ const App: React.FC = () => {
     })
 
     const cube = createCube(CubeType.FatWireframeCube, geometry, material, lineMaterial)
-    // const cube = createCube('FatWireframeCube', geometry, material, lineMaterial)
+    // const cube = createCube(CubeType.FatEdgesCube, geometry, material, lineMaterial)
     cubesRef.current.push(cube)
     scene.add(cube)
 
@@ -140,22 +141,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const cubes = cubesRef.current
     const currentCubeIndex = currentCubeIndexRef.current
-    const name = cubes[currentCubeIndex].name
 
-    switch (name) {
-      case CubeType.FatWireframeCube:
-        updateFatWireframeCube(
-          cubes[currentCubeIndex] as FatWireframeCube,
-          new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
-        )
-        break
-      case CubeType.FatEdgesCube:
-        updateFatEdgesCube(
-          cubes[currentCubeIndex] as FatEdgesCube,
-          new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
-        )
-        break
-    }
+    updateCube(cubes[currentCubeIndex], new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth))
   }, [cubeWidth, cubeHeight, cubeDepth])
 
   return (
