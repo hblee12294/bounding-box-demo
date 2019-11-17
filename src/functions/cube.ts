@@ -5,7 +5,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 
-import { FatWireframeCube, FatEdgesCube, CubeName } from '../types'
+import { FatWireframeCube, FatEdgesCube, CubeType } from '../types'
 
 export const updateFatWireframeCube = (mesh: FatWireframeCube, geometry: BufferGeometry) => {
   // Dispose outline & mesh geometries
@@ -45,7 +45,7 @@ export const addFatEdges = (mesh: Mesh, geometry: BufferGeometry, material: Line
 }
 
 export const createCube = (
-  name: CubeName,
+  name: CubeType,
   geometry: BufferGeometry,
   material: Material,
   lineMaterial: LineMaterial,
@@ -54,10 +54,10 @@ export const createCube = (
   cube.name = name
 
   switch (name) {
-    case 'FatWireframeCube':
+    case CubeType.FatWireframeCube:
       addFatWireframe(cube, geometry, lineMaterial)
       return cube as FatWireframeCube
-    case 'FatEdgesCube':
+    case CubeType.FatEdgesCube:
       addFatEdges(cube, geometry, lineMaterial)
       return cube as FatEdgesCube
   }

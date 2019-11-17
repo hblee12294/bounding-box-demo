@@ -18,7 +18,7 @@ import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 
-import { FatWireframeCube, FatEdgesCube, Cube } from './types'
+import { FatWireframeCube, FatEdgesCube, Cube, CubeType } from './types'
 import { updateFatWireframeCube, updateFatEdgesCube, createCube } from './functions'
 
 // Components
@@ -101,7 +101,7 @@ const App: React.FC = () => {
       resolution: new Vector2(width, height),
     })
 
-    const cube = createCube('FatEdgesCube', geometry, material, lineMaterial)
+    const cube = createCube(CubeType.FatWireframeCube, geometry, material, lineMaterial)
     // const cube = createCube('FatWireframeCube', geometry, material, lineMaterial)
     cubesRef.current.push(cube)
     scene.add(cube)
@@ -143,13 +143,13 @@ const App: React.FC = () => {
     const name = cubes[currentCubeIndex].name
 
     switch (name) {
-      case 'FatWireframeCube':
+      case CubeType.FatWireframeCube:
         updateFatWireframeCube(
           cubes[currentCubeIndex] as FatWireframeCube,
           new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
         )
         break
-      case 'FatEdgesCube':
+      case CubeType.FatEdgesCube:
         updateFatEdgesCube(
           cubes[currentCubeIndex] as FatEdgesCube,
           new BoxBufferGeometry(cubeWidth, cubeHeight, cubeDepth),
