@@ -22,6 +22,8 @@ import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 import { Cube, CubeType } from './types'
 import { createCube, updateCube } from './functions'
 
+import pcdFile from './data/bincomp.pcd'
+
 // Components
 import { Slider } from './components'
 
@@ -102,10 +104,17 @@ const App: React.FC = () => {
       resolution: new Vector2(width, height),
     })
 
-    const cube = createCube(CubeType.FatWireframeCube, geometry, material, lineMaterial)
-    // const cube = createCube(CubeType.FatEdgesCube, geometry, material, lineMaterial)
+    // const cube = createCube(CubeType.FatWireframeCube, geometry, material, lineMaterial)
+    const cube = createCube(CubeType.FatEdgesCube, geometry, material, lineMaterial)
     cubesRef.current.push(cube)
     scene.add(cube)
+
+    // PCD
+    const loader = new PCDLoader()
+    loader.load(pcdFile, points => {
+      points.position.set(0, 0, 1.5)
+      scene.add(points)
+    })
 
     // Functions
     const renderScene = () => {
