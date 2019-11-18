@@ -24,6 +24,8 @@ import { createCube, updateCube } from './functions'
 
 import pcdFile from './data/bincomp.pcd'
 
+import { CubeDragControls } from './libs'
+
 // Components
 import { Slider } from './components'
 
@@ -64,13 +66,22 @@ const App: React.FC = () => {
 
     // Controls
     const mapControl = new MapControls(camera, renderer.domElement)
-    const dragControl = new DragControls(cubesRef.current, camera, renderer.domElement)
+    // const dragControl = new DragControls(cubesRef.current, camera, renderer.domElement)
+    const dragControl = new CubeDragControls(cubesRef.current, camera, renderer.domElement)
 
     dragControl.addEventListener('dragstart', function(event) {
       const e = event as DragEvent
 
       // Disbale mapControl
       mapControl.enabled = false
+    })
+
+    dragControl.addEventListener('hoveron', function(event) {
+      console.log(event)
+    })
+
+    dragControl.addEventListener('hoveroff', function(event) {
+      console.log(event)
     })
 
     dragControl.addEventListener('dragend', function(event) {
