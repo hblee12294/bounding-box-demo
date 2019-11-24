@@ -1,1 +1,1 @@
-export { default as CubeDragControls } from './DragControls'
+export { default as CubeControls } from './CubeControls'

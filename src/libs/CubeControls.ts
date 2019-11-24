@@ -1,6 +1,6 @@
 import { EventDispatcher, Matrix4, Plane, Raycaster, Vector2, Vector3, Object3D, Camera } from 'three'
 
-class CubeDragControls extends EventDispatcher {
+class CubeControls extends EventDispatcher {
   public enabled = true
 
   private _objects: Object3D[]
@@ -25,8 +25,6 @@ class CubeDragControls extends EventDispatcher {
     this._objects = objects
     this._domElement = domElement
     this._camera = camera
-
-    console.log(this._domElement)
 
     this.activate()
   }
@@ -76,6 +74,8 @@ class CubeDragControls extends EventDispatcher {
       this.dispatchEvent({ type: 'drag', object: this._selected })
 
       return
+    } else {
+      this.dispatchEvent({ type: 'mousemove', raycaster: this._raycaster })
     }
 
     this._raycaster.setFromCamera(this._mouse, this._camera)
@@ -124,6 +124,8 @@ class CubeDragControls extends EventDispatcher {
       this._domElement.style.cursor = 'move'
 
       this.dispatchEvent({ type: 'dragstart', object: this._selected })
+    } else {
+      this.dispatchEvent({ type: 'mousedown', raycaster: this._raycaster })
     }
   }
 
@@ -133,6 +135,8 @@ class CubeDragControls extends EventDispatcher {
     if (this._selected) {
       this.dispatchEvent({ type: 'dragend', object: this._selected })
       this._selected = null
+    } else {
+      this.dispatchEvent({ type: 'mouseup' })
     }
 
     this._domElement.style.cursor = this._hovered ? 'pointer' : 'auto'
@@ -151,4 +155,4 @@ class CubeDragControls extends EventDispatcher {
   }
 }
 
-export default CubeDragControls
+export default CubeControls

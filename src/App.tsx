@@ -12,22 +12,25 @@ import {
   BoxBufferGeometry,
   Float32BufferAttribute,
   Vector2,
+  Vector3,
   BufferGeometry,
+  Plane,
+  Line,
+  LineBasicMaterial,
+  Raycaster,
 } from 'three'
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
-import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 
 import { Cube, CubeType } from './types'
-import { createCube, updateCube } from './functions'
+import { createCube, updateCube, isEmptyVector3, updateDrawLine } from './functions'
 
-import pcdFile from './data/bincomp.pcd'
-
-import { CubeDragControls } from './libs'
+import { CubeControls } from './libs'
 
 // Components
 import { Slider } from './components'
+
+const GROUND_DISTANCE = 0.5
 
 const commonSliderProps = {
   min: 1,
@@ -64,42 +67,28 @@ const App: React.FC = () => {
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(width, height)
 
-    // Controls
-    const mapControl = new MapControls(camera, renderer.domElement)
-    // const dragControl = new DragControls(cubesRef.current, camera, renderer.domElement)
-    const dragControl = new CubeDragControls(cubesRef.current, camera, renderer.domElement)
-
-    dragControl.addEventListener('dragstart', function(event) {
-      const e = event as DragEvent
-
-      // Disbale mapControl
-      mapControl.enabled = false
-    })
-
-    dragControl.addEventListener('hoveron', function(event) {
-      console.log(event)
-    })
-
-    dragControl.addEventListener('hoveroff', function(event) {
-      console.log(event)
-    })
-
-    dragControl.addEventListener('dragend', function(event) {
-      const e = event as DragEvent
-
-      // Enable mapControl
-      mapControl.enabled = true
-    })
-
     // Helpers
     const gridHelper = new GridHelper(10, 10)
     scene.add(gridHelper)
     const axesHelper = new AxesHelper(5)
     scene.add(axesHelper)
 
+    // Init drawline
+    const ground = new Plane(new Vector3(0, 1, 0), 0)
+    const startPoint = new Vector3()
+    const endPoint = new Vector3()
+
+    const drawLineGeometry = new BufferGeometry()
+    drawLineGeometry.setAttribute('position', new Float32BufferAttribute(new Float32Array(3 * 3), 3))
+
+    const drawLineMaterial = new LineBasicMaterial({ color: 0xffff00, linewidth: 2 })
+    drawLineMaterial.needsUpdate = false
+    const drawLine = new Line(drawLineGeometry, drawLineMaterial)
+    scene.add(drawLine)
+
     // Cube
     const geometry = new BufferGeometry()
-    geometry.addAttribute('position', new Float32BufferAttribute([], 3))
+    geometry.setAttribute('position', new Float32BufferAttribute([], 3))
 
     const material = new MeshBasicMaterial({
       color: 0x1abc9c,
@@ -115,16 +104,56 @@ const App: React.FC = () => {
       resolution: new Vector2(width, height),
     })
 
-    // const cube = createCube(CubeType.FatWireframeCube, geometry, material, lineMaterial)
     const cube = createCube(CubeType.FatEdgesCube, geometry, material, lineMaterial)
+    cube.position.setY(GROUND_DISTANCE)
     cubesRef.current.push(cube)
     scene.add(cube)
 
-    // PCD
-    const loader = new PCDLoader()
-    loader.load(pcdFile, points => {
-      points.position.set(0, 0, 1.5)
-      scene.add(points)
+    // Controls
+    const mapControl = new MapControls(camera, renderer.domElement)
+    const cubeControl = new CubeControls(cubesRef.current, camera, renderer.domElement)
+
+    cubeControl.addEventListener('mousedown', function(event) {
+      const raycaster = event.raycaster as Raycaster
+
+      if (isEmptyVector3(startPoint)) {
+        raycaster.ray.intersectPlane(ground, startPoint)
+
+        updateDrawLine(drawLine, 0, startPoint)
+      } else {
+        raycaster.ray.intersectPlane(ground, endPoint)
+
+        updateDrawLine(drawLine, 1, endPoint)
+
+        startPoint.set(0, 0, 0)
+        endPoint.set(0, 0, 0)
+      }
+    })
+
+    cubeControl.addEventListener('mousemove', function(event) {
+      const raycaster = event.raycaster as Raycaster
+
+      if (!isEmptyVector3(startPoint)) {
+        raycaster.ray.intersectPlane(ground, endPoint)
+      }
+    })
+
+    cubeControl.addEventListener('mouseup', function(event) {
+      // console.log(event)
+    })
+
+    cubeControl.addEventListener('dragstart', function(event) {
+      const e = event as DragEvent
+
+      // Disbale mapControl
+      mapControl.enabled = false
+    })
+
+    cubeControl.addEventListener('dragend', function(event) {
+      const e = event as DragEvent
+
+      // Enable mapControl
+      mapControl.enabled = true
     })
 
     // Functions
